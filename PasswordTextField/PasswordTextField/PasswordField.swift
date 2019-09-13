@@ -8,10 +8,17 @@
 
 import UIKit
 
+enum PasswordStrength: Int {
+    case weak = 1
+    case medium
+    case strong
+}
+
 class PasswordField: UIControl {
     
     // Public API - these properties are used to fetch the final password and strength values
     private (set) var password: String = ""
+    private (set) var strength: PasswordStrength = .weak
     
     private let standardMargin: CGFloat = 8.0
     private let textFieldContainerHeight: CGFloat = 50.0
@@ -38,16 +45,100 @@ class PasswordField: UIControl {
     private var strongView: UIView = UIView()
     private var strengthDescriptionLabel: UILabel = UILabel()
     
+    private var showingPassword = false
+    
     func setup() {
         // Lay out your subviews here
+        backgroundColor = bgColor
         
         addSubview(titleLabel)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: standardMargin).isActive = true
+        titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: standardMargin).isActive = true
+        titleLabel.text = "ENTER PASSWORD"
+        titleLabel.font = labelFont
+        titleLabel.textColor = labelTextColor
+        
+        let textFieldContainerView = UIView()
+        addSubview(textFieldContainerView)
+        textFieldContainerView.backgroundColor = .clear
+        textFieldContainerView.layer.borderColor = textFieldBorderColor.cgColor
+        textFieldContainerView.layer.borderWidth = 2.0
+        textFieldContainerView.layer.cornerRadius = 5.0
+        textFieldContainerView.translatesAutoresizingMaskIntoConstraints = false
+        textFieldContainerView.topAnchor.constraint(equalToSystemSpacingBelow: titleLabel.bottomAnchor, multiplier: 1.0).isActive = true
+        textFieldContainerView.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor).isActive = true
+        trailingAnchor.constraint(equalTo: textFieldContainerView.trailingAnchor, constant: standardMargin).isActive = true
+        textFieldContainerView.heightAnchor.constraint(equalToConstant: textFieldContainerHeight).isActive = true
+        
+        textFieldContainerView.addSubview(textField)
+        textField.delegate = self
+        textField.tintColor = textFieldBorderColor
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        textField.isSecureTextEntry = !showingPassword
+        textField.topAnchor.constraint(equalTo: textFieldContainerView.topAnchor, constant: textFieldMargin).isActive = true
+        textField.leadingAnchor.constraint(equalTo: textFieldContainerView.leadingAnchor, constant: textFieldMargin).isActive = true
+        textFieldContainerView.bottomAnchor.constraint(equalTo: textField.bottomAnchor, constant: textFieldMargin).isActive = true
+        
+        textFieldContainerView.addSubview(showHideButton)
+        showHideButton.translatesAutoresizingMaskIntoConstraints = false
+        showHideButton.setImage(UIImage(named: "eyes-closed"), for: .normal)
+        showHideButton.centerYAnchor.constraint(equalTo: textField.centerYAnchor).isActive = true
+        showHideButton.leadingAnchor.constraint(equalTo: textField.trailingAnchor, constant: textFieldMargin).isActive = true
+        textFieldContainerView.trailingAnchor.constraint(equalTo: showHideButton.trailingAnchor, constant: textFieldMargin).isActive = true
+        showHideButton.addTarget(self, action: #selector(showHideButtonTapped(_sender:)), for: .touchUpInside)
+        
+        addSubview(weakView)
+        weakView.translatesAutoresizingMaskIntoConstraints = false
+        weakView.backgroundColor = weakColor
+        weakView.widthAnchor.constraint(equalToConstant: colorViewSize.width).isActive = true
+        weakView.heightAnchor.constraint(equalToConstant: colorViewSize.height).isActive = true
+        weakView.layer.cornerRadius = colorViewSize.height / 2.0
+        
+        addSubview(mediumView)
+        mediumView.translatesAutoresizingMaskIntoConstraints = false
+        mediumView.backgroundColor = unusedColor
+        mediumView.widthAnchor.constraint(equalToConstant: colorViewSize.width).isActive = true
+        mediumView.heightAnchor.constraint(equalToConstant: colorViewSize.height).isActive = true
+        mediumView.layer.cornerRadius = colorViewSize.height / 2
+        
+        addSubview(strongView)
+        strongView.translatesAutoresizingMaskIntoConstraints = false
+        strongView.backgroundColor = unusedColor
+        strongView.widthAnchor.constraint(equalToConstant: colorViewSize.width).isActive = true
+        strongView.heightAnchor.constraint(equalToConstant: colorViewSize.height).isActive = true
+        strongView.layer.cornerRadius = colorViewSize.height / 2
+        
+        let colorStackView = UIStackView(arrangedSubviews: [weakView, mediumView, strongView])
+        addSubview(colorStackView)
+        colorStackView.translatesAutoresizingMaskIntoConstraints = false
+        colorStackView.axis = .horizontal
+        colorStackView.alignment = .fill
+        colorStackView.distribution = .fill
+        colorStackView.spacing = 2.0
+        colorStackView.topAnchor.constraint(equalTo: textFieldContainerView.bottomAnchor, constant: 16.0).isActive = true
+        colorStackView.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor).isActive = true
+        
+        addSubview(strengthDescriptionLabel)
+        strengthDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
+        strengthDescriptionLabel.leadingAnchor.constraint(equalTo: colorStackView.trailingAnchor, constant: standardMargin).isActive = true
+        strengthDescriptionLabel.centerYAnchor.constraint(equalTo: colorStackView.centerYAnchor).isActive = true
+        bottomAnchor.constraint(equalTo: strengthDescriptionLabel.bottomAnchor, constant: standardMargin).isActive = true
+        strengthDescriptionLabel.text = "Too Weak"
+        strengthDescriptionLabel.font = labelFont
+        strengthDescriptionLabel.textColor = labelTextColor
+        
     }
     
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         setup()
+    }
+    
+    @objc func showHideButtonTapped(_sender: UIButton) {
+        showingPassword.toggle()
+        showHideButton.setImage(UIImage(named: (showingPassword) ? "eyes-open" : "eyes-closed"), for: .normal)
+        textField.isSecureTextEntry = !showingPassword
     }
 }
 
